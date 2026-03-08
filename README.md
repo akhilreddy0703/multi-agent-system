@@ -120,4 +120,4 @@ More detail in [LOCAL_SETUP.md](docs/LOCAL_SETUP.md), [DOCKER_SETUP.md](docs/DOC
 
 ## License
 
-MIT. See [LICENSE](LICENSE).
+This project is licensed under the [MIT License](LICENSE).
