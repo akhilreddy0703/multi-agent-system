@@ -109,7 +109,7 @@ Multi-agent backend that routes user queries to **RAG (FAQ)**, **weather**, and 
 | Issue | Check |
 |-------|--------|
 | **Can't open login or UI** | Use **http://** (not https). Backend: http://localhost:8000/login. UI: http://localhost:3000. Docker: `docker compose ps` — app and agent-ui healthy. |
-| **401** | Get JWT from `POST /auth/login`, send `Authorization: Bearer <token>`. |
+| **401** | Get JWT from `POST /auth/login`, send `Authorization: Bearer <token>`. You do **not** use `JWT_SECRET` in requests—it stays in `.env` on the server; the token from login is enough. |
 | **RAG empty** | Milvus up? FAQ at `data/faq.xlsx`? Logs: "FAQ knowledge ready". |
 | **Todo not working** | Todo MCP on 8001 (local: `uv run python -m src.tools.todo_mcp_server`; Docker: todo-mcp healthy). |
 | **UI red status** | Endpoint http://localhost:8000; token from /login; refresh sidebar. |

@@ -17,13 +17,35 @@ cp .env.example .env
 
 Edit `.env`: set **`OPENAI_API_KEY`** and **`JWT_SECRET`**. Optional for remote/ngrok: `AGENT_UI_URL`, `AGENTOS_API_URL`.
 
-## 2. Start the stack
+## 2. Build and start the stack
+
+Three services are built from source; the rest use pre-built images.
+
+| Service     | Built from              | Description        |
+|------------|-------------------------|--------------------|
+| **app**    | `Dockerfile` (root)     | FastAPI backend    |
+| **agent-ui** | `agent-ui/Dockerfile` | Next.js chat UI    |
+| **todo-mcp** | `Dockerfile.todo`     | Todo MCP server    |
+
+**First time or after code changes:**
 
 ```bash
+docker compose build
 docker compose up -d
 ```
 
-Wait until all services are healthy (~1–2 min): `docker compose ps`.
+Or build and start in one step:
+
+```bash
+docker compose up -d --build
+```
+
+Docker Compose will build the app (Python/uv), agent-ui (Node/pnpm, Next.js), and todo-mcp images if they’re missing or outdated. To rebuild only app and UI after changing backend or frontend code:
+
+```bash
+docker compose build app agent-ui
+docker compose up -d
+```
 
 ## 3. Access
 
@@ -35,6 +57,8 @@ Wait until all services are healthy (~1–2 min): `docker compose ps`.
 
 Sign in with **demo** / **password** at the login page; you are redirected to the Chat UI with endpoint and team set.
 
+Wait until all services are healthy (~1–2 min): `docker compose ps`.
+
 ## 4. From another machine
 
 Use your host IP instead of `localhost` (e.g. http://192.168.1.10:8000 and http://192.168.1.10:3000). In `.env` set:
@@ -42,10 +66,10 @@ Use your host IP instead of `localhost` (e.g. http://192.168.1.10:8000 and http:
 - `AGENT_UI_URL=http://<host-ip>:3000`
 - `AGENTOS_API_URL=http://<host-ip>:8000`
 
-Then rebuild and restart:
+Then rebuild app and agent-ui (so they pick up the new URLs) and restart:
 
 ```bash
-docker compose build agent-ui app && docker compose up -d
+docker compose build app agent-ui && docker compose up -d
 ```
 
 ## 5. Public HTTPS (ngrok)
