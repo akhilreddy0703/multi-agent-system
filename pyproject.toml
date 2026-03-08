@@ -3,6 +3,7 @@ name = "multi-agent-rag"
 version = "0.1.0"
 description = "Multi-Agent RAG System with FastMCP Integration"
 readme = "README.md"
+license = "MIT"
 requires-python = ">=3.11"
 dependencies = [
     "agno[openai]>=2.0",
