@@ -1,113 +1,102 @@
-# Multi-Agent RAG System with FastMCP Integration
+# Multi-Agent RAG System
 
-A multi-agent AI system built with **Agno**, **FastAPI**, and **FastMCP** that answers FAQ queries via RAG, provides weather information, and manages tasks through a Todo MCP server. All APIs are protected with JWT authentication.
+Multi-agent backend that routes queries to **RAG (FAQ)**, **weather**, and **Todo** agents. Built with **Agno**, **FastAPI**, and **FastMCP**. JWT-protected APIs; optional chat UI via [agent-ui](https://github.com/agno-agi/agent-ui).
 
-## Features
+---
 
-- **Parent Agent (Orchestrator)**: Routes user queries to the appropriate specialist using Agno Team (route mode).
-- **RAG Agent**: Answers FAQ questions using a Milvus vector database built from XLSX/CSV data; responds only from retrieved context with a fallback when no answer is found.
-- **Tool Agent**: Handles weather (mock) and Todo CRUD via a FastMCP server.
-- **APIs**: `POST /chat`, `GET /weather`, Todo CRUD (`POST/GET/PUT/DELETE /todos`), all with JWT auth.
-- **Docker**: Optional Docker Compose setup for Milvus, Todo MCP server, and the app.
+## Prerequisites
 
-## Tech Stack
+| Requirement | Purpose |
+|-------------|---------|
+| **Python 3.11+** | Runtime |
+| **[uv](https://docs.astral.sh/uv/)** | Install: `curl -LsSf https://astral.sh/uv/install.sh \| sh` |
+| **Docker & Docker Compose** | Milvus (and optionally full stack) |
+| **OpenAI API key** | LLM + embeddings |
 
-- **Framework**: Agno (multi-agent, Team route mode)
-- **LLM**: OpenAI `gpt-4.1-mini`
-- **Embeddings**: OpenAI `text-embedding-3-small`
-- **Vector DB**: Milvus (Docker or `http://localhost:19530`)
-- **Todo**: FastMCP server (streamable-http on port 8001)
-- **Auth**: JWT (HS256) via Agno `JWTMiddleware`
-- **Package manager**: uv
-
-## Project Structure
-
-```
-├── pyproject.toml
-├── docker-compose.yml
-├── Dockerfile
-├── data/
-│   └── faq.xlsx          # Your FAQ data (XLSX or CSV)
-├── src/
-│   ├── main.py           # FastAPI app, JWT, lifespan, routes
-│   ├── config.py         # Settings (env)
-│   ├── auth/routes.py    # POST /auth/login
-│   ├── agents/           # Orchestrator, RAG agent, Tool agent
-│   ├── tools/            # Weather tool, Todo FastMCP server
-│   ├── knowledge/        # Milvus + XLSX loader
-│   └── routes/           # /chat, /weather, /todos
-└── tests/                # Pytest happy-path tests
-```
+---
 
 ## Setup
 
-### 1. Clone and install (uv)
+### 1. Install and configure
 
 ```bash
 cd multi-agent-system
 uv sync
-```
-
-### 2. Environment
-
-Copy `.env.example` to `.env` and set:
-
-```bash
 cp .env.example .env
 ```
 
-Required:
+Edit `.env`: set **`OPENAI_API_KEY`** and **`JWT_SECRET`** (at least a long random string). Optional: `MILVUS_URI`, `TODO_MCP_URL`, `AGENT_UI_URL`, `AGENTOS_API_URL`.
 
-- `OPENAI_API_KEY` – OpenAI API key (for LLM and embeddings)
-- `JWT_SECRET` – Secret for JWT (e.g. a long random string for HS256)
+### 2. Start dependencies
 
-Optional:
-
-- `MILVUS_URI` – Default `http://localhost:19530`
-- `WEATHER_CITY` – Default city for weather (default: London)
-- `TODO_MCP_URL` – Todo MCP server URL (default: `http://localhost:8001/mcp`)
-
-### 3. FAQ data
-
-Place your FAQ file at `data/faq.xlsx` (or CSV). The app loads it into Milvus on startup. If the file is missing, the RAG agent still runs but has no documents to retrieve.
-
-### 4. Run Milvus (for RAG)
-
-**Option A – Docker Compose (Milvus + Todo + App)**
-
-```bash
-docker compose up -d
-# App: http://localhost:8000
-# Todo MCP: http://localhost:8001/mcp
-# Milvus: localhost:19530
-```
-
-**Option B – Milvus only (then run app locally)**
+**Milvus** (required for RAG):
 
 ```bash
 docker compose up -d etcd minio milvus-standalone
-# Then start Todo MCP and app locally (see below).
 ```
 
-### 5. Run Todo MCP server (if not using Docker)
+Wait until healthy (~1–2 min). **Todo MCP** (for task tools) in a separate terminal:
 
 ```bash
 uv run python -m src.tools.todo_mcp_server
-# Listens on http://localhost:8001/mcp
 ```
 
-### 6. Run the app locally
+Runs at **http://localhost:8001/mcp**.
+
+### 3. Start the backend
 
 ```bash
 uv run uvicorn src.main:app --host 0.0.0.0 --port 8000
-# Or: uv run python -c "from src.main import main; main()"
 ```
 
-API docs: http://localhost:8000/docs
+You should see: `Lifespan: FAQ knowledge ready`, `App: AgentOS ready`. Backend: **http://localhost:8000**.
 
-## API Usage
+### 4. (Optional) FAQ data
 
-### 1. Login (get JWT)
+Place **`data/faq.xlsx`** (or CSV) for RAG. Loaded on startup; re-ingestion is skipped if content is unchanged (`skip_if_exists=True`).
+
+---
+
+## Running with the UI
+
+Use the included **agent-ui** for a chat interface. After sign-in, endpoint, token, and **orchestrator** team are set automatically.
+
+### Start the UI
+
+```bash
+cd agent-ui
+cp .env.local.example .env.local   # optional: NEXT_PUBLIC_AGENTOS_ENDPOINT=http://localhost:8000
+pnpm install && pnpm dev
+```
+
+Open **http://localhost:3000**.
+
+### Sign in and chat
+
+1. Open **http://localhost:8000/login** (or **http://localhost:8000** → redirects to login).
+2. Sign in: **demo** / **password**.
+3. You are redirected to agent-ui with token, endpoint (**http://localhost:8000**), and **orchestrator** team pre-filled. Wait for the sidebar to show a green status.
+4. Start chatting.
+
+### Sample queries (UI)
+
+| Intent | Example message |
+|--------|------------------|
+| **FAQ / RAG** | What are the company working hours? |
+| | How does BigRock help small businesses? |
+| **Weather** | What is the weather in London? |
+| **Todos** | Create a task called Buy milk |
+| | List all my tasks |
+
+Responses stream in the chat; tool calls appear inline. Full walkthrough: **[docs/UI_SETUP.md](docs/UI_SETUP.md)**.
+
+---
+
+## Running with the API
+
+All endpoints require a JWT except `/`, `/login`, and `/auth/login`.
+
+### Get a token
 
 ```bash
 curl -X POST "http://localhost:8000/auth/login" \
@@ -115,51 +104,122 @@ curl -X POST "http://localhost:8000/auth/login" \
   -d "username=demo&password=password"
 ```
 
-Response: `{"access_token":"<JWT>","token_type":"bearer"}`
+Use the `access_token` from the response.
 
-Demo credentials: `username=demo`, `password=password`.
+### Sample requests
 
-### 2. Chat (orchestrator)
+Set your token:
 
 ```bash
-export TOKEN="<access_token from login>"
+export TOKEN="<paste_access_token_here>"
+```
+
+**Single response (POST /chat):**
+
+```bash
 curl -X POST "http://localhost:8000/chat" \
   -H "Authorization: Bearer $TOKEN" \
   -H "Content-Type: application/json" \
   -d '{"query": "What is the weather in London?"}'
 ```
 
-### 3. Weather
+**Streaming (POST /chat/stream):**
 
 ```bash
-curl "http://localhost:8000/weather?city=London" \
-  -H "Authorization: Bearer $TOKEN"
+curl -X POST "http://localhost:8000/chat/stream" \
+  -H "Authorization: Bearer $TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"message": "List my tasks"}' \
+  --no-buffer
 ```
 
-### 4. Todos (CRUD)
+### Sample queries (API)
 
-- Create: `POST /todos` with body `{"title": "...", "description": "..."}`
-- List: `GET /todos?status=all|open|done`
-- Update: `PUT /todos/{task_id}` with body `{"title": "...", "status": "open|done"}`
-- Delete: `DELETE /todos/{task_id}`
+| Intent | Example `query` or `message` |
+|--------|------------------------------|
+| **FAQ / RAG** | `"What are the company working hours?"` |
+| | `"How does BigRock help small businesses?"` |
+| **Weather** | `"What is the weather in London?"` |
+| **Todos** | `"Create a task called Buy milk"` |
+| | `"List all my tasks"` |
 
-All require `Authorization: Bearer <token>`.
+**Interactive docs:** **http://localhost:8000/docs** — use **Authorize** with the JWT, then try `/chat`, `/chat/stream`, `/weather`, `/todos`. Manual curl walkthrough: **[docs/MANUAL_API_TEST.md](docs/MANUAL_API_TEST.md)**.
 
-## Tests
+---
+
+## Verify with E2E tests
+
+With backend and Todo MCP running:
+
+```bash
+uv run python tests/e2e_test.py
+```
+
+Runs auth, AgentOS, weather, Todo MCP, chat (weather/FAQ/todo), streaming, and edge cases. All should **PASS**.
+
+Unit/integration tests:
 
 ```bash
 uv run pytest tests/ -v
 ```
 
-Uses test JWT secret and does not require a real Milvus or Todo server for the happy-path tests.
+---
 
-## Docker details
+## Project structure
 
-- **milvus-standalone**: Milvus 2.4 with etcd and MinIO.
-- **todo-mcp**: FastMCP Todo server (streamable-http on 8001).
-- **app**: FastAPI app (port 8000), connects to Milvus and Todo MCP via service names.
+```
+├── pyproject.toml, docker-compose.yml, Dockerfile, .dockerignore
+├── data/faq.xlsx, data/sample_queries.json
+├── src/
+│   ├── main.py          # FastAPI, JWT, lifespan, AgentOS
+│   ├── config.py        # Settings from env
+│   ├── agents/          # Orchestrator, RAG agent, Tool agent
+│   ├── tools/           # Weather, Todo FastMCP server
+│   ├── knowledge/       # Milvus + FAQ loader
+│   ├── prompts/          # Agent and orchestrator prompts
+│   ├── auth/, routes/
+├── agent-ui/             # Chat UI (Next.js)
+├── tests/                # e2e_test.py, test_*.py
+└── docs/                 # UI_SETUP.md, MANUAL_API_TEST.md
+```
 
-Ensure `.env` is present when running `docker compose up` so the app has `OPENAI_API_KEY` and `JWT_SECRET`.
+---
+
+## Tech stack
+
+- **Agno** — Orchestrator (Team route mode), RAG and tool agents  
+- **OpenAI** — gpt-4.1-mini, text-embedding-3-small  
+- **Milvus** — Vector store for FAQ RAG  
+- **FastMCP** — Todo server (streamable-http, port 8001)  
+- **FastAPI + JWT** — Protected routes; login at `/auth/login`  
+- **Loguru** — Logging  
+
+---
+
+## Docker: full stack
+
+Run everything in containers (including app and Todo MCP):
+
+```bash
+# .env must have OPENAI_API_KEY and JWT_SECRET
+docker compose up -d
+```
+
+App: **http://localhost:8000**, Todo MCP: 8001, Milvus: 19530.
+
+---
+
+## Troubleshooting
+
+| Issue | Check |
+|-------|--------|
+| **401 on /chat or /weather** | Get JWT from `POST /auth/login`, send `Authorization: Bearer <token>` |
+| **RAG returns nothing** | Milvus up? `docker compose ps`. FAQ at `data/faq.xlsx`? Logs: "FAQ knowledge ready" |
+| **Todo does nothing** | Todo MCP running on 8001? `uv run python -m src.tools.todo_mcp_server` |
+| **UI: no teams / red status** | Backend on 8000? After login, endpoint and team should be set from redirect; refresh sidebar |
+| **E2E fails** | Milvus + Todo MCP + app all running; then `uv run python tests/e2e_test.py` |
+
+---
 
 ## License
 

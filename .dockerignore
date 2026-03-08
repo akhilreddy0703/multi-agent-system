@@ -1,0 +1,14 @@
+.git
+.venv
+.env
+.env.*
+__pycache__
+*.pyc
+.pytest_cache
+.mypy_cache
+agent-ui
+docs
+tests
+test.py
+*.md
+!README.md

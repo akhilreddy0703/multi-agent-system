@@ -67,8 +67,12 @@ services:
     container_name: todo-mcp
     ports:
       - "8001:8001"
-    depends_on:
-      - milvus-standalone
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8001/')"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
 
   app:
     build: .
@@ -79,11 +83,17 @@ services:
     environment:
       MILVUS_URI: http://milvus-standalone:19530
       TODO_MCP_URL: http://todo-mcp:8001/mcp
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/docs')"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
     depends_on:
       milvus-standalone:
         condition: service_healthy
       todo-mcp:
-        condition: service_started
+        condition: service_healthy
 
 volumes:
   milvus-etcd:
