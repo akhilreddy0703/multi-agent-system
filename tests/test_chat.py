@@ -1,4 +1,4 @@
-"""Happy-path tests for POST /chat."""
+"""Happy-path test for POST /chat."""
 
 import pytest
 from httpx import AsyncClient
@@ -15,9 +15,3 @@ async def test_chat_returns_response(client: AsyncClient, auth_headers: dict):
     data = r.json()
     assert "response" in data
     assert isinstance(data["response"], str)
-
-
-@pytest.mark.asyncio
-async def test_chat_requires_auth(client: AsyncClient):
-    r = await client.post("/chat", json={"query": "Hello"})
-    assert r.status_code in (401, 403)

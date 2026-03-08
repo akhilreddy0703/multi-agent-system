@@ -120,4 +120,4 @@ More detail in [LOCAL_SETUP.md](docs/LOCAL_SETUP.md), [DOCKER_SETUP.md](docs/DOC
 
 ## License
 
-MIT. See [LICENSE](LICENSE). For open-source checklist and practices (contributing, security, licensing), see [docs/OPEN_SOURCE.md](docs/OPEN_SOURCE.md).
+MIT. See [LICENSE](LICENSE).
