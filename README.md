@@ -198,14 +198,24 @@ uv run pytest tests/ -v
 
 ## Docker: full stack
 
-Run everything in containers (including app and Todo MCP):
+Run backend, Todo MCP, Milvus, and the chat UI in containers:
 
 ```bash
 # .env must have OPENAI_API_KEY and JWT_SECRET
 docker compose up -d
 ```
 
-App: **http://localhost:8000**, Todo MCP: 8001, Milvus: 19530.
+**Access (same machine):**
+
+| What | URL |
+|------|-----|
+| **Login page** | http://localhost:8000 or http://localhost:8000/login |
+| **Chat UI** | http://localhost:3000 |
+| **API docs** | http://localhost:8000/docs |
+
+After the stack is healthy (~1–2 min), open the **login page**, sign in with **demo** / **password**; you are redirected to the **Chat UI** with endpoint and team set. If you open the Chat UI directly (http://localhost:3000), set the endpoint to http://localhost:8000 and paste a token from the login page if needed.
+
+**From another machine:** Use your host IP instead of `localhost` (e.g. http://192.168.1.10:8000 and http://192.168.1.10:3000). Set in `.env`: `AGENT_UI_URL=http://<host-ip>:3000` and `AGENTOS_API_URL=http://<host-ip>:8000`, then rebuild and restart: `docker compose build agent-ui app && docker compose up -d`.
 
 ---
 
@@ -213,6 +223,7 @@ App: **http://localhost:8000**, Todo MCP: 8001, Milvus: 19530.
 
 | Issue | Check |
 |-------|--------|
+| **Can't open login or UI** | Use **http://** (not https). Backend: http://localhost:8000/login. UI: http://localhost:3000. If using Docker, run `docker compose ps` and ensure `app` and `agent-ui` are healthy. |
 | **401 on /chat or /weather** | Get JWT from `POST /auth/login`, send `Authorization: Bearer <token>` |
 | **RAG returns nothing** | Milvus up? `docker compose ps`. FAQ at `data/faq.xlsx`? Logs: "FAQ knowledge ready" |
 | **Todo does nothing** | Todo MCP running on 8001? `uv run python -m src.tools.todo_mcp_server` |

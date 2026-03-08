@@ -68,7 +68,7 @@ services:
     ports:
       - "8001:8001"
     healthcheck:
-      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8001/')"]
+      test: ["CMD", "python", "-c", "import socket; s=socket.socket(); s.settimeout(2); s.connect(('127.0.0.1', 8001)); s.close()"]
       interval: 10s
       timeout: 5s
       retries: 3
@@ -78,11 +78,14 @@ services:
     build: .
     container_name: multi-agent-app
     ports:
-      - "8000:8000"
+      - "0.0.0.0:8000:8000"
     env_file: .env
     environment:
       MILVUS_URI: http://milvus-standalone:19530
       TODO_MCP_URL: http://todo-mcp:8001/mcp
+      # URLs the browser will use (set to your host IP if accessing from another machine)
+      AGENT_UI_URL: ${AGENT_UI_URL:-http://localhost:3000}
+      AGENTOS_API_URL: ${AGENTOS_API_URL:-http://localhost:8000}
     healthcheck:
       test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/docs')"]
       interval: 15s
@@ -94,6 +97,18 @@ services:
         condition: service_healthy
       todo-mcp:
         condition: service_healthy
+
+  agent-ui:
+    build:
+      context: ./agent-ui
+      dockerfile: Dockerfile
+      args:
+        NEXT_PUBLIC_AGENTOS_ENDPOINT: ${AGENTOS_API_URL:-http://localhost:8000}
+    container_name: multi-agent-ui
+    ports:
+      - "0.0.0.0:3000:3000"
+    depends_on:
+      - app
 
 volumes:
   milvus-etcd:
