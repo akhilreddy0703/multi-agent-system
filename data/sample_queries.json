@@ -1,0 +1,159 @@
+{
+  "description": "Sample queries for the Multi-Agent RAG system, derived from data/faq.xlsx (BigRock FAQ) and tool flows.",
+  "auth": {
+    "login": {
+      "valid": { "username": "demo", "password": "password" },
+      "invalid": { "username": "demo", "password": "wrong" }
+    }
+  },
+  "queries": [
+    {
+      "id": "faq_1",
+      "category": "faq",
+      "route": "rag",
+      "query": "How does BigRock help small business owners succeed?",
+      "expected": "RAG answer from FAQ about domains, hosting, website builder, SEO, email"
+    },
+    {
+      "id": "faq_2",
+      "category": "faq",
+      "route": "rag",
+      "query": "Why buy domain name from BigRock?",
+      "expected": "Answer about domain extensions, prices, DNS, domain theft protection"
+    },
+    {
+      "id": "faq_3",
+      "category": "faq",
+      "route": "rag",
+      "query": "What domains are available from BigRock?",
+      "expected": "Answer about TLDs like .com, .in, .org, .net, .tech, premium domains"
+    },
+    {
+      "id": "faq_4",
+      "category": "faq",
+      "route": "rag",
+      "query": "How do I choose the right domain registrar?",
+      "expected": "Answer about pricing, registration period, transfer, DNS, BigRock features"
+    },
+    {
+      "id": "faq_5",
+      "category": "faq",
+      "route": "rag",
+      "query": "What makes a domain premium?",
+      "expected": "Answer about premium domains (one-word .com, valuable keyword)"
+    },
+    {
+      "id": "faq_6",
+      "category": "faq",
+      "route": "rag",
+      "query": "What are WHM and WHMCS? Do I get WHMCS with Reseller Hosting?",
+      "expected": "Answer about WHM control panel, WHMCS automation, reseller hosting"
+    },
+    {
+      "id": "faq_7",
+      "category": "faq",
+      "route": "rag",
+      "query": "What is the cost of Managed SEO services?",
+      "expected": "Answer about SEO pricing, scope, competition"
+    },
+    {
+      "id": "faq_8",
+      "category": "faq",
+      "route": "rag",
+      "query": "What is the BigRock Affiliate program and how does it work?",
+      "expected": "Answer about affiliate program"
+    },
+    {
+      "id": "faq_9",
+      "category": "faq",
+      "route": "rag",
+      "query": "What is cPanel hosting and what are its benefits?",
+      "expected": "Answer about cPanel hosting benefits"
+    },
+    {
+      "id": "faq_10",
+      "category": "faq",
+      "route": "rag",
+      "query": "Do Reseller Hosting plans include a One-Click Installer?",
+      "expected": "Answer about reseller hosting and one-click installer"
+    },
+    {
+      "id": "weather_1",
+      "category": "weather",
+      "route": "tool_weather",
+      "query": "What is the weather in London?",
+      "expected": "Weather data for London (mock: temperature, condition)"
+    },
+    {
+      "id": "weather_2",
+      "category": "weather",
+      "route": "tool_weather",
+      "query": "How is the weather today?",
+      "expected": "Weather for configured default city"
+    },
+    {
+      "id": "weather_3",
+      "category": "weather",
+      "route": "tool_weather",
+      "query": "Is it going to rain in Mumbai?",
+      "expected": "Weather for Mumbai (mock)"
+    },
+    {
+      "id": "todo_1",
+      "category": "todo",
+      "route": "tool_todo",
+      "query": "Create a task called Finish homework",
+      "expected": "Confirmation that task was created"
+    },
+    {
+      "id": "todo_2",
+      "category": "todo",
+      "route": "tool_todo",
+      "query": "List all my tasks",
+      "expected": "List of tasks or 'No tasks found'"
+    },
+    {
+      "id": "todo_3",
+      "category": "todo",
+      "route": "tool_todo",
+      "query": "Add a task: Buy groceries for the week",
+      "expected": "Task created message"
+    },
+    {
+      "id": "out_of_scope_1",
+      "category": "out_of_scope",
+      "route": "rag_fallback",
+      "query": "Explain quantum entanglement in simple terms",
+      "expected": "Fallback message (answer not in FAQ)"
+    },
+    {
+      "id": "out_of_scope_2",
+      "category": "out_of_scope",
+      "route": "rag_fallback",
+      "query": "What is the capital of France?",
+      "expected": "Fallback or polite refusal"
+    },
+    {
+      "id": "edge_empty",
+      "category": "edge",
+      "route": "any",
+      "query": "",
+      "expected": "No crash; 200 with some response"
+    }
+  ],
+  "rest_api_samples": {
+    "weather": [
+      { "method": "GET", "path": "/weather", "query": "city=London" },
+      { "method": "GET", "path": "/weather", "query": "city=Mumbai" }
+    ],
+    "todos": [
+      { "method": "POST", "path": "/todos", "body": { "title": "Sample task", "description": "From sample_queries.json" } },
+      { "method": "GET", "path": "/todos", "query": "status=all" },
+      { "method": "PUT", "path": "/todos/1", "body": { "status": "done" } },
+      { "method": "DELETE", "path": "/todos/1" }
+    ],
+    "chat": [
+      { "method": "POST", "path": "/chat", "body": { "query": "How does BigRock help small business owners succeed?" } }
+    ]
+  }
+}
