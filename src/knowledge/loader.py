@@ -1,6 +1,5 @@
 """Build FAQ knowledge base from XLSX and load into Milvus."""
 
-import asyncio
 from pathlib import Path
 
 from agno.knowledge.embedder.openai import OpenAIEmbedder
@@ -36,14 +35,16 @@ async def load_faq_from_path(
     path: Path | str | None = None,
     name: str = "FAQ",
 ) -> None:
-    """Insert FAQ content from an XLSX (or CSV) file into the knowledge base."""
+    """Insert FAQ content from an XLSX (or CSV) file into the knowledge base.
+
+    Uses skip_if_exists=True so the same content is not re-ingested on every
+    backend restart. Data is loaded once; subsequent restarts skip if the
+    content hash already exists in Milvus. The RAG agent uses this same
+    Knowledge (same collection) for retrieval.
+    """
     path = path or DEFAULT_FAQ_PATH
     path = Path(path)
     if not path.exists():
         return
-    await knowledge.ainsert(name=name, path=str(path))
+    await knowledge.ainsert(name=name, path=str(path), skip_if_exists=True)
 
-
-def load_faq_sync(knowledge: Knowledge, path: Path | str | None = None, name: str = "FAQ") -> None:
-    """Synchronous wrapper to load FAQ into knowledge base."""
-    asyncio.run(load_faq_from_path(knowledge, path=path, name=name))

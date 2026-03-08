@@ -15,6 +15,8 @@ class Settings(BaseSettings):
     milvus_uri: str = "http://localhost:19530"
     weather_city: str = "London"
     todo_mcp_url: str = "http://localhost:8001/mcp"
+    agent_ui_url: str = "http://localhost:3000"  # agent-ui origin for login redirect and CORS
+    agentos_api_url: str = "http://localhost:8000"  # backend URL passed to agent-ui after login (endpoint + default team)
 
 
 settings = Settings()

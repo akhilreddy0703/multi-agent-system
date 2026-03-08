@@ -5,6 +5,8 @@ from typing import Literal
 
 from fastmcp import FastMCP
 
+from src.log_config import logger as log
+
 mcp = FastMCP("todo_server")
 
 # In-memory store (single process). For multi-process use a shared store.
@@ -31,12 +33,14 @@ def create_task(title: str, description: str = "") -> str:
         "completed_at": None,
     }
     _tasks.append(task)
+    log.info(f"MCP create_task task_id={task_id} title={title}")
     return f"Created task {task_id}: {title}"
 
 
 @mcp.tool()
 def list_tasks(status_filter: Literal["open", "done", "all"] = "all") -> str:
     """List todo tasks. status_filter: 'open', 'done', or 'all'."""
+    log.info(f"MCP list_tasks status_filter={status_filter}")
     if status_filter == "all":
         out = _tasks
     else:
@@ -52,6 +56,7 @@ def list_tasks(status_filter: Literal["open", "done", "all"] = "all") -> str:
 @mcp.tool()
 def update_task(task_id: int, title: str | None = None, status: Literal["open", "done"] | None = None) -> str:
     """Update a task's title and/or status. Use task_id from list_tasks."""
+    log.info(f"MCP update_task task_id={task_id} title={title} status={status}")
     for t in _tasks:
         if t["id"] == task_id:
             if title is not None:
@@ -69,6 +74,7 @@ def update_task(task_id: int, title: str | None = None, status: Literal["open", 
 @mcp.tool()
 def delete_task(task_id: int) -> str:
     """Delete a task by id. Use task_id from list_tasks."""
+    log.info(f"MCP delete_task task_id={task_id}")
     for i, t in enumerate(_tasks):
         if t["id"] == task_id:
             _tasks.pop(i)
@@ -77,6 +83,7 @@ def delete_task(task_id: int) -> str:
 
 
 if __name__ == "__main__":
+    log.info("Todo MCP server starting transport=streamable-http port=8001 path=/mcp")
     mcp.run(
         transport="streamable-http",
         host="0.0.0.0",

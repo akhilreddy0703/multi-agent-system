@@ -7,12 +7,14 @@ from fastmcp import Client
 from pydantic import BaseModel
 
 from src.config import settings
+from src.log_config import logger as log
 
 router = APIRouter(prefix="/todos", tags=["todos"])
 
 
 async def _call_todo_tool(name: str, arguments: dict[str, Any]) -> str:
     """Call a tool on the Todo MCP server."""
+    log.debug(f"Todo MCP call_tool name={name} arguments={arguments}")
     client = Client(settings.todo_mcp_url)
     try:
         async with client:
@@ -27,6 +29,7 @@ async def _call_todo_tool(name: str, arguments: dict[str, Any]) -> str:
                 return str(result.data)
             return str(result)
     except Exception as e:
+        log.error(f"Todo MCP error name={name} error={e}")
         raise HTTPException(status_code=502, detail=f"Todo server error: {e}") from e
 
 
@@ -43,6 +46,7 @@ class UpdateTaskBody(BaseModel):
 @router.post("")
 async def create_task(body: CreateTaskBody):
     """Create a new task."""
+    log.info(f"Todo create title={body.title}")
     msg = await _call_todo_tool(
         "create_task",
         {"title": body.title, "description": body.description or ""},
@@ -53,6 +57,7 @@ async def create_task(body: CreateTaskBody):
 @router.get("")
 async def list_tasks(status: Literal["open", "done", "all"] = "all"):
     """List tasks, optionally filtered by status."""
+    log.info(f"Todo list status={status}")
     msg = await _call_todo_tool("list_tasks", {"status_filter": status})
     return {"tasks": msg, "status_filter": status}
 
@@ -60,6 +65,7 @@ async def list_tasks(status: Literal["open", "done", "all"] = "all"):
 @router.put("/{task_id:int}")
 async def update_task(task_id: int, body: UpdateTaskBody):
     """Update a task's title and/or status."""
+    log.info(f"Todo update task_id={task_id} title={body.title} status={body.status}")
     args: dict[str, Any] = {"task_id": task_id}
     if body.title is not None:
         args["title"] = body.title
@@ -72,5 +78,6 @@ async def update_task(task_id: int, body: UpdateTaskBody):
 @router.delete("/{task_id:int}")
 async def delete_task(task_id: int):
     """Delete a task by id."""
+    log.info(f"Todo delete task_id={task_id}")
     msg = await _call_todo_tool("delete_task", {"task_id": task_id})
     return {"message": msg}

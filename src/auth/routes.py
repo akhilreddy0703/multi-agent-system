@@ -6,6 +6,7 @@ import jwt
 from fastapi import APIRouter, Form, HTTPException
 
 from src.config import settings
+from src.log_config import logger as log
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
@@ -29,5 +30,7 @@ async def login(username: str = Form(...), password: str = Form(...)):
             settings.jwt_secret,
             algorithm="HS256",
         )
+        log.info(f"Auth login success user={username}")
         return {"access_token": token, "token_type": "bearer"}
+    log.warning(f"Auth login failed user={username}")
     raise HTTPException(status_code=401, detail="Invalid credentials")
